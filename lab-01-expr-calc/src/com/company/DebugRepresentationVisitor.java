@@ -1,7 +1,7 @@
 package com.company;
 
 public class DebugRepresentationVisitor implements ExpressionVisitor {
-    public static DebugRepresentationVisitor INSTANCE = new DebugRepresentationVisitor();
+    public static final DebugRepresentationVisitor INSTANCE = new DebugRepresentationVisitor();
 
     private DebugRepresentationVisitor() {}
 

@@ -1,6 +1,8 @@
 package com.company;
 
 public class LiteralImpl implements Literal {
+    private final double mValue;
+
     LiteralImpl(double value) {
         mValue = value;
     }
@@ -19,6 +21,4 @@ public class LiteralImpl implements Literal {
     public String toString() {
         return (String) accept(ToStringVisitor.INSTANCE);
     }
-
-    private final double mValue;
 }

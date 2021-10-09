@@ -1,7 +1,7 @@
 package com.company;
 
 public class ToStringVisitor implements ExpressionVisitor {
-    public static ToStringVisitor INSTANCE = new ToStringVisitor();
+    public static final ToStringVisitor INSTANCE = new ToStringVisitor();
 
     private ToStringVisitor() {}
 

@@ -1,7 +1,7 @@
 package com.company;
 
 public class GetShortNameVisitor implements ExpressionVisitor {
-    public static GetShortNameVisitor INSTANCE = new GetShortNameVisitor();
+    public static final GetShortNameVisitor INSTANCE = new GetShortNameVisitor();
 
     private GetShortNameVisitor() {}
 

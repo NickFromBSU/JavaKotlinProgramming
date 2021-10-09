@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Stack;
 
 public class ParserImpl implements Parser {
-    public static ParserImpl INSTANCE = new ParserImpl();
+    public static final ParserImpl INSTANCE = new ParserImpl();
 
     private ParserImpl() {}
 

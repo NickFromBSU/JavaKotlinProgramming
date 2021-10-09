@@ -15,6 +15,9 @@ class NodePos {
 }
 
 public class TreeDrawer {
+    private ArrayList<NodePos> mNodesCoordinates;
+    private HashMap<Expression, Integer> mSubtreeToHeight;
+
     public void drawTree(Expression tree) {
         mSubtreeToHeight = new HashMap<>();
         mNodesCoordinates =  new ArrayList<>();
@@ -76,7 +79,4 @@ public class TreeDrawer {
         FillArrayWithCoordinates(operation.getRight(), right_expr_x, y + 2);
         return FillArrayWithCoordinates(operation.getLeft(), left_expr_x, y + 2);
     }
-
-    private ArrayList<NodePos> mNodesCoordinates;
-    private HashMap<Expression, Integer> mSubtreeToHeight;
 }
