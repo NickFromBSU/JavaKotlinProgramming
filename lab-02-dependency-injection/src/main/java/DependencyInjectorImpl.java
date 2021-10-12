@@ -13,8 +13,8 @@ public class DependencyInjectorImpl implements DependencyInjector {
         private final Constructor<T> constructor;
         private final ArrayList<Node<?>> argumentsOfConstructor;
 
-        NonSingletonNode(Constructor<?> constructor, ArrayList<Node<?>> args) {
-            this.constructor = (Constructor<T>) constructor;
+        NonSingletonNode(Constructor<T> constructor, ArrayList<Node<?>> args) {
+            this.constructor = constructor;
             argumentsOfConstructor = args;
         }
 
@@ -67,7 +67,7 @@ public class DependencyInjectorImpl implements DependencyInjector {
         return properConstructors.get(0);
     }
 
-    private void addSingleton(Class<?> type) {
+    private <T> void addSingleton(Class<T> type) {
         try {
             Object singleInstance = type.getDeclaredField("INSTANCE").get(null);
             mClassToNode.put(type, new SingletonNode<>(singleInstance));
@@ -77,26 +77,30 @@ public class DependencyInjectorImpl implements DependencyInjector {
         }
     }
 
-    private void addNonSingleton(Class<?> type) {
+    private Class<?> getImplOfInterface(Class<?> interf) {
+        Class<?> impl = mInterfaceToImpl.get(interf);
+        if (impl == null) {
+            throw new RuntimeException("Interface " +
+                    interf.getName() + " has no chosen implementation.");
+        }
+        return impl;
+    }
+
+    private <T> void addNonSingleton(Class<T> type) {
         Constructor<?> constructor = findProperConstructor(type);
         Class<?>[] params = constructor.getParameterTypes();
         ArrayList<Node<?>> nodesForParamsOfConstructor = new ArrayList<>();
         for (Class<?> parameterType : params) {
+            if (parameterType.isInterface()) {
+                parameterType = getImplOfInterface(parameterType);
+            }
             learnToInstantiate(parameterType);
             nodesForParamsOfConstructor.add(mClassToNode.get(parameterType));
         }
         mClassToNode.put(type, new NonSingletonNode<>(constructor, nodesForParamsOfConstructor));
     }
 
-    private void learnToInstantiate(Class<?> type) {
-        if (type.isInterface()) {
-            Class<?> impl = mInterfaceToImpl.get(type);
-            if (impl == null) {
-                throw new RuntimeException("Interface " + type.getName() +
-                        " has no chosen implementation.");
-            }
-            return;
-        }
+    private <T> void learnToInstantiate(Class<T> type) {
         if (mClassToNode.containsKey(type)) {
             return;
         }
@@ -104,17 +108,18 @@ public class DependencyInjectorImpl implements DependencyInjector {
             throw new RuntimeException(type.getName() + " is its own dependency.");
         }
         mVisited.add(type);
-
         if (type.isAnnotationPresent(Singleton.class)) {
             addSingleton(type);
             return;
         }
-
         addNonSingleton(type);
     }
 
     @Override
-    public void register(Class<?> type) {
+    public <T> void register(Class<T> type) {
+        if (type.isInterface()) {
+            return;
+        }
         mVisited.clear();
         learnToInstantiate(type);
     }
@@ -125,8 +130,11 @@ public class DependencyInjectorImpl implements DependencyInjector {
             throw new RuntimeException(type.getName() + " is not an interface or " +
                     subType.getName() + " is not a class");
         }
+        if (mInterfaceToImpl.containsKey(type)) {
+            throw new RuntimeException("The implementation for " +
+                    type.getName() + " is already chosen.");
+        }
         mInterfaceToImpl.put(type, subType);
-        register(subType);
     }
 
     @Override

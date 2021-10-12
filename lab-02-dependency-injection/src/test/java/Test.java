@@ -1,6 +1,11 @@
-import TestCase1.Base;
-import TestCase1.D;
-import TestCase1.Single;
+import TestCase1.*;
+import TestCase2.Cycle;
+import TestCase2.First;
+import TestCase2.FirstInterface;
+import TestCase2.Third;
+import TestCase3.BadSingletonClass;
+import TestCase3.MultipleInjectConstructorsClass;
+import TestCase3.NoInjectConstructorClass;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -9,6 +14,10 @@ public class Test {
     @org.junit.jupiter.api.Test
     public void TestCase1() {
         DependencyInjector di = new DependencyInjectorImpl();
+        assertThrows(RuntimeException.class, () -> di.resolve(Base.class));
+        assertThrows(RuntimeException.class, () -> di.resolve(A.class));
+        assertThrows(RuntimeException.class, () -> di.resolve(C.class));
+        assertThrows(RuntimeException.class, () -> di.resolve(D.class));
         di.register(Base.class);
         Base base1 = di.resolve(Base.class);
         Base base2 = di.resolve(Base.class);
@@ -26,5 +35,29 @@ public class Test {
         D d = di.resolve(D.class);
         assertSame(d.single, single);
         assertNotSame(d, base1.a.d);
+    }
+
+    @org.junit.jupiter.api.Test
+    public void TestCase2() {
+        DependencyInjector di = new DependencyInjectorImpl();
+
+        // Because FirstInterface has no chosen implementation.
+        assertThrows(RuntimeException.class, () -> di.register(Third.class));
+        di.register(FirstInterface.class, First.class);
+        di.register(Third.class);
+        assertNotSame(di.resolve(Third.class), di.resolve(Third.class));
+        // Because FirstInterface already has chosen implementation.
+        assertThrows(RuntimeException.class, () -> di.register(FirstInterface.class, First.class));
+
+        assertThrows(RuntimeException.class, () -> di.register(Cycle.class));
+    }
+
+    @org.junit.jupiter.api.Test
+    public void TestCase3() {
+        DependencyInjector di = new DependencyInjectorImpl();
+        assertThrows(RuntimeException.class, () -> di.register(BadSingletonClass.class));
+        assertThrows(RuntimeException.class, () -> di.register(NoInjectConstructorClass.class));
+        assertThrows(RuntimeException.class,
+                () -> di.register(MultipleInjectConstructorsClass.class));
     }
 }
