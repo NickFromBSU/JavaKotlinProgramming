@@ -32,13 +32,7 @@ public class DependencyInjectorImpl implements DependencyInjector {
         }
     }
 
-    static private class SingletonNode<T> implements Node<T> {
-        private final T instance;
-
-        SingletonNode(T instance) {
-            this.instance = instance;
-        }
-
+    private static record SingletonNode<T>(T instance) implements Node<T> {
         @Override
         public T getInstance() {
             return instance;
@@ -67,16 +61,6 @@ public class DependencyInjectorImpl implements DependencyInjector {
         return properConstructors.get(0);
     }
 
-    private <T> void addSingleton(Class<T> type) {
-        try {
-            Object singleInstance = type.getDeclaredField("INSTANCE").get(null);
-            mClassToNode.put(type, new SingletonNode<>(singleInstance));
-        } catch (NoSuchFieldException | IllegalAccessException e) {
-            throw new RuntimeException("No public static field INSTANCE in singleton-class " +
-                    type.getName());
-        }
-    }
-
     private Class<?> getImplOfInterface(Class<?> interf) {
         Class<?> impl = mInterfaceToImpl.get(interf);
         if (impl == null) {
@@ -86,18 +70,24 @@ public class DependencyInjectorImpl implements DependencyInjector {
         return impl;
     }
 
-    private <T> void addNonSingleton(Class<T> type) {
+    private <T> void addNode(Class<T> type) {
         Constructor<?> constructor = findProperConstructor(type);
         Class<?>[] params = constructor.getParameterTypes();
         ArrayList<Node<?>> nodesForParamsOfConstructor = new ArrayList<>();
         for (Class<?> parameterType : params) {
             if (parameterType.isInterface()) {
                 parameterType = getImplOfInterface(parameterType);
+            } else {
+                learnToInstantiate(parameterType);
             }
-            learnToInstantiate(parameterType);
             nodesForParamsOfConstructor.add(mClassToNode.get(parameterType));
         }
-        mClassToNode.put(type, new NonSingletonNode<>(constructor, nodesForParamsOfConstructor));
+        NonSingletonNode<?> node = new NonSingletonNode<>(constructor, nodesForParamsOfConstructor);
+        if (type.isAnnotationPresent(Singleton.class)) {
+            mClassToNode.put(type, new SingletonNode<>(node.getInstance()));
+        } else {
+            mClassToNode.put(type, node);
+        }
     }
 
     private <T> void learnToInstantiate(Class<T> type) {
@@ -108,11 +98,7 @@ public class DependencyInjectorImpl implements DependencyInjector {
             throw new RuntimeException(type.getName() + " is its own dependency.");
         }
         mVisited.add(type);
-        if (type.isAnnotationPresent(Singleton.class)) {
-            addSingleton(type);
-            return;
-        }
-        addNonSingleton(type);
+        addNode(type);
     }
 
     @Override
@@ -135,6 +121,7 @@ public class DependencyInjectorImpl implements DependencyInjector {
                     type.getName() + " is already chosen.");
         }
         mInterfaceToImpl.put(type, subType);
+        register(subType);
     }
 
     @Override

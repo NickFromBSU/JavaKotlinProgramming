@@ -3,7 +3,7 @@ import TestCase2.Cycle;
 import TestCase2.First;
 import TestCase2.FirstInterface;
 import TestCase2.Third;
-import TestCase3.BadSingletonClass;
+import TestCase3.BadClass;
 import TestCase3.MultipleInjectConstructorsClass;
 import TestCase3.NoInjectConstructorClass;
 
@@ -55,7 +55,7 @@ public class Test {
     @org.junit.jupiter.api.Test
     public void TestCase3() {
         DependencyInjector di = new DependencyInjectorImpl();
-        assertThrows(RuntimeException.class, () -> di.register(BadSingletonClass.class));
+        assertThrows(RuntimeException.class, () -> di.register(BadClass.class));
         assertThrows(RuntimeException.class, () -> di.register(NoInjectConstructorClass.class));
         assertThrows(RuntimeException.class,
                 () -> di.register(MultipleInjectConstructorsClass.class));
